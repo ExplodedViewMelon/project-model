@@ -1,5 +1,5 @@
 pytorch_lightning
 torch
 numpy
-os
-cv2
+opencv-python
+torchmetrics

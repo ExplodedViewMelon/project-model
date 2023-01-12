@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import os
 import numpy as np
 import cv2
@@ -84,7 +83,6 @@ class Model(LightningModule):
     def configure_optimizers(self):
         return optim.Adam(self.parameters(), lr=self.lr)
 
-
 def main():
     # define hyper parameters
     LR = 1e-4
@@ -111,4 +109,7 @@ def main():
     testloader = DataLoader(test_set, batch_size=BATCH_SIZE)
     trainer.test(model, testloader)
 
-    print("Model succesfully trained and tested")
+
+print("running main function")
+main()
+print("Model succesfully trained and tested")
