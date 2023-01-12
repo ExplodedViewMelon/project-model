@@ -33,7 +33,7 @@ class FingersDataset(Dataset):
         label = int(filename[-6:-5])
         if filename[-5] == "R": label += 6
         
-        if torch.cuda.is_available(): return (torch.from_numpy(image).type(torch.float32), torch.tensor(label).type(torch.float32))
+        if torch.cuda.is_available(): return (torch.from_numpy(image).type(torch.float32), torch.tensor(label).type(torch.LongTensor))
         else: return (image, label)
 
 class Model(LightningModule):
