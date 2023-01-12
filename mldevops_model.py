@@ -9,22 +9,32 @@ from torch.utils.data import DataLoader
 from torchmetrics.classification.accuracy import Accuracy
 from torchmetrics import Accuracy
 from torch import nn, optim
+from torch.utils.data import Dataset
 
 from pytorch_lightning import LightningModule
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import EarlyStopping
 
-def get_data_from_folder(path):
-    data = []
-    for filename in os.listdir(path):
-        raw_im = cv2.imread(path+"/"+filename, cv2.IMREAD_GRAYSCALE)
-        #raw_im = cv2.resize(raw_im, (28,28)) # resize images
-        # image = torch.tensor(np.array([raw_im])).float()
-        image = [raw_im]
+class FingersDataset(Dataset):
+    def __init__(self, path):
+        self.path = path
+        self.filenames = [filename for filename in os.listdir(path)]
+
+    def __len__(self):
+        return len(self.filenames)
+    
+    def __getitem__(self, idx):
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+        filename = self.filenames[idx]
+        image = cv2.imread(self.path+"/"+filename, cv2.IMREAD_GRAYSCALE)
+        image = image.reshape(1,128,128) # adding singleton dimension
+        image = image / 228
         label = int(filename[-6:-5])
         if filename[-5] == "R": label += 6
-        data.append((image,label))
-    return data
+        
+        if torch.cuda.is_available(): return (torch.from_numpy(image).type(torch.float32), torch.tensor(label).type(torch.float32))
+        else: return (image, label)
 
 class Model(LightningModule):
     def __init__(self, dropout_p, lr):
@@ -54,6 +64,7 @@ class Model(LightningModule):
         self.criterium = nn.CrossEntropyLoss()
 
     def forward(self, x):
+        x = x.type(torch.float32) # TODO: fuck this solution
         x = self.backbone(x)
         return self.classifier(x)
 
@@ -91,34 +102,24 @@ def main():
     BATCH_SIZE = 32
     DROPOUT_P = 0.1
     print(f"hyper paramters: LR:{LR}, BATCH_SIZE:{BATCH_SIZE}, DROPOUT_P:{DROPOUT_P}")
+    print("Loading data now")
 
-    print("load data")
     # get data
-    val_train_set = get_data_from_folder("data/train/") # TODO
-    # unpack val/train
-    val_set = val_train_set[:1000]
-    train_set = val_train_set[1000:]
+    train_set = FingersDataset("data/train/")
+    val_set = FingersDataset("data/test/")
     # create dataloaders
-    trainloader = DataLoader(train_set, batch_size=BATCH_SIZE, num_workers=1)
-    valloader = DataLoader(val_set, batch_size=BATCH_SIZE, num_workers=1)
-    print("done loading data")
+    trainloader = DataLoader(train_set, batch_size=BATCH_SIZE, num_workers=8)
+    valloader = DataLoader(val_set, batch_size=BATCH_SIZE, num_workers=8)
+    
+    print("Done loading data. Init model and fit")
 
-    print("defining model and training")
     # define model and train
     model = Model(DROPOUT_P, LR) 
     early_stopping_callback = EarlyStopping(monitor="val_loss", patience=3, verbose=True, mode="min", min_delta=0.1)
-    if torch.cuda.is_available(): trainer = Trainer(callbacks=[early_stopping_callback], accelerator="gpu", devices=1)
-    else: trainer = Trainer(callbacks=[early_stopping_callback])
+    if torch.cuda.is_available(): trainer = Trainer(callbacks=[early_stopping_callback], accelerator="gpu", devices=1, max_epochs=1000)
+    else: trainer = Trainer(callbacks=[early_stopping_callback], max_epochs=1000)
     trainer.fit(model, trainloader, valloader)
+    print("Model succesfully trained")
 
-    print("done fitting modelling, testing accuracy")
-
-    # TEST
-    test_set = get_data_from_folder("/content/archive/test/")
-    testloader = DataLoader(test_set, batch_size=BATCH_SIZE)
-    trainer.test(model, testloader)
-
-
-print("running main function")
-main()
-print("Model succesfully trained and tested")
+if __name__ == '__main__':
+    main()
