@@ -95,8 +95,8 @@ def main():
     val_set = val_train_set[:1000]
     train_set = val_train_set[1000:]
     # create dataloaders
-    trainloader = DataLoader(train_set, batch_size=BATCH_SIZE, num_workers=4)
-    valloader = DataLoader(val_set, batch_size=BATCH_SIZE, num_workers=4)
+    trainloader = DataLoader(train_set, batch_size=BATCH_SIZE, num_workers=1)
+    valloader = DataLoader(val_set, batch_size=BATCH_SIZE, num_workers=1)
 
     # define model and train
     model = Model(DROPOUT_P, LR) 
