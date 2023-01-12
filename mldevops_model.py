@@ -90,7 +90,7 @@ def main():
     DROPOUT_P = 0.1
 
     # get data
-    val_train_set = get_data_from_folder("/content/archive/train/") # TODO
+    val_train_set = get_data_from_folder("data/train/") # TODO
     # unpack val/train
     val_set = val_train_set[:1000]
     train_set = val_train_set[1000:]
