@@ -86,7 +86,7 @@ class Model(LightningModule):
 def main():
     # define hyper parameters
     LR = 1e-4
-    BATCH_SIZE = 128
+    BATCH_SIZE = 32
     DROPOUT_P = 0.1
     print(f"hyper paramters: LR:{LR}, BATCH_SIZE:{BATCH_SIZE}, DROPOUT_P:{DROPOUT_P}")
 
