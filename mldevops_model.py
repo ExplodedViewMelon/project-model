@@ -19,7 +19,7 @@ def get_data_from_folder(path):
     for filename in os.listdir(path):
         raw_im = cv2.imread(path+"/"+filename, cv2.IMREAD_GRAYSCALE)
         #raw_im = cv2.resize(raw_im, (28,28)) # resize images
-        image = torch.tensor([raw_im]).float()
+        image = torch.tensor(np.array([raw_im])).float()
         label = int(filename[-6:-5])
         if filename[-5] == "R": label += 6
         data.append((image,label))
@@ -95,8 +95,8 @@ def main():
     val_set = val_train_set[:1000]
     train_set = val_train_set[1000:]
     # create dataloaders
-    trainloader = DataLoader(train_set, batch_size=BATCH_SIZE)
-    valloader = DataLoader(val_set, batch_size=BATCH_SIZE)
+    trainloader = DataLoader(train_set, batch_size=BATCH_SIZE, num_workers=4)
+    valloader = DataLoader(val_set, batch_size=BATCH_SIZE, num_workers=4)
 
     # define model and train
     model = Model(DROPOUT_P, LR) 
