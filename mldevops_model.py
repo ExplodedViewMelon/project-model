@@ -88,7 +88,9 @@ def main():
     LR = 1e-4
     BATCH_SIZE = 128
     DROPOUT_P = 0.1
+    print(f"hyper paramters: LR:{LR}, BATCH_SIZE:{BATCH_SIZE}, DROPOUT_P:{DROPOUT_P}")
 
+    print("load data")
     # get data
     val_train_set = get_data_from_folder("data/train/") # TODO
     # unpack val/train
@@ -97,12 +99,16 @@ def main():
     # create dataloaders
     trainloader = DataLoader(train_set, batch_size=BATCH_SIZE, num_workers=1)
     valloader = DataLoader(val_set, batch_size=BATCH_SIZE, num_workers=1)
+    print("done loading data")
 
+    print("defining model and training")
     # define model and train
     model = Model(DROPOUT_P, LR) 
     early_stopping_callback = EarlyStopping(monitor="val_loss", patience=3, verbose=True, mode="min", min_delta=0.1)
     trainer = Trainer(callbacks=[early_stopping_callback], accelerator="gpu", devices=1)
     trainer.fit(model, trainloader, valloader)
+
+    print("done fitting modelling, testing accuracy")
 
     # TEST
     test_set = get_data_from_folder("/content/archive/test/")
