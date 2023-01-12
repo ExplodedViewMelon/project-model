@@ -19,7 +19,8 @@ def get_data_from_folder(path):
     for filename in os.listdir(path):
         raw_im = cv2.imread(path+"/"+filename, cv2.IMREAD_GRAYSCALE)
         #raw_im = cv2.resize(raw_im, (28,28)) # resize images
-        image = torch.tensor(np.array([raw_im])).float()
+        # image = torch.tensor(np.array([raw_im])).float()
+        image = [raw_im]
         label = int(filename[-6:-5])
         if filename[-5] == "R": label += 6
         data.append((image,label))
@@ -76,7 +77,8 @@ class Model(LightningModule):
     def get_accuracy(self, batch):
         data, target = batch
         preds = self(data)
-        accuracy = Accuracy(task = "multiclass", num_classes = 12).to("cuda")
+        accuracy = Accuracy(task = "multiclass", num_classes = 12)
+        if torch.cuda.is_available(): accuracy.to("cuda")
         r = accuracy(preds, target)
         return r
 
@@ -105,7 +107,8 @@ def main():
     # define model and train
     model = Model(DROPOUT_P, LR) 
     early_stopping_callback = EarlyStopping(monitor="val_loss", patience=3, verbose=True, mode="min", min_delta=0.1)
-    trainer = Trainer(callbacks=[early_stopping_callback], accelerator="gpu", devices=1)
+    if torch.cuda.is_available(): trainer = Trainer(callbacks=[early_stopping_callback], accelerator="gpu", devices=1)
+    else: trainer = Trainer(callbacks=[early_stopping_callback])
     trainer.fit(model, trainloader, valloader)
 
     print("done fitting modelling, testing accuracy")
